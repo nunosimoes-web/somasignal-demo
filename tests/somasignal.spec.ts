@@ -1,38 +1,22 @@
 import { expect, test } from '@playwright/test'
 
-test('analysis controls update the interpretation surface', async ({ page }) => {
+test('simple symptom flow works across map, chat and result', async ({ page }) => {
   await page.goto('/')
 
-  await page.getByRole('button', { name: /Dor lombar/ }).click()
-  await expect(page.getByRole('heading', { name: 'Costas' })).toBeVisible()
-
-  await page.getByRole('button', { name: 'Zona corporal' }).click()
-  await expect(page.getByText('Correspondencia corpo-texto')).toBeVisible()
-  await expect(page.getByText(/Texto detectou: lombar -> Costas/)).toBeVisible()
-
-  await page.getByRole('button', { name: 'Contexto emocional' }).click()
-  await expect(page.getByText('Hipoteses emocionais para entrevista')).toBeVisible()
-  await expect(page.getByText(/Pistas: sozinho, carrego/)).toBeVisible()
-
-  await page.getByRole('button', { name: /caminhada curta/ }).click()
-  await expect(page.getByText('Intervencao somatica curta')).toBeVisible()
-  await expect(page.getByText(/Comparar intensidade antes\/depois/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Onde doi/ })).toBeVisible()
+  await expect(page.getByText('1. Escolhe a zona')).toBeVisible()
+  await expect(page.getByText('2. Conta-me o que sentes')).toBeVisible()
+  await expect(page.getByText('3. Causas e solucoes')).toBeVisible()
 
   await page.getByRole('button', { name: /Dor no cotovelo/ }).click()
   await expect(page.getByRole('heading', { name: 'Cotovelos' })).toBeVisible()
+  await expect(page.getByText(/esforco repetido/)).toBeVisible()
 
   await page.getByRole('button', { name: /Joelho doi/ }).click()
   await expect(page.getByRole('heading', { name: 'Joelhos' })).toBeVisible()
+  await expect(page.getByText(/suporte, direccao/)).toBeVisible()
 
-  await expect(page.getByText('Etapa 1/4')).toBeVisible()
-  await page.getByRole('button', { name: 'Nao tenho red flags' }).click()
-  await expect(page.getByText('Etapa 2/4')).toBeVisible()
-
-  await page.getByRole('button', { name: 'Aparece mais no trabalho' }).click()
-  await expect(page.getByText(/padrao de exigencia\/ritmo/)).toBeVisible()
-  await expect(page.getByText(/Pistas recolhidas: pressao de trabalho/)).toBeVisible()
-
-  await page.getByLabel('Responder no chat').fill('Tenho falta de ar ou fraqueza')
-  await page.getByLabel('Enviar resposta').click()
-  await expect(page.getByText('Red flag detectada')).toBeVisible()
+  await page.getByLabel('Descrever dor').fill('Tenho falta de ar e dor no peito')
+  await page.getByLabel('Enviar').click()
+  await expect(page.getByText(/avaliacao medica/).first()).toBeVisible()
 })

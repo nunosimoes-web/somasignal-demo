@@ -1,20 +1,15 @@
 import {
-  Activity,
   AlertTriangle,
-  ArrowRight,
   Bot,
   Brain,
   CheckCircle2,
   HeartPulse,
-  ListChecks,
-  MessageCircleQuestion,
-  Radar,
-  ShieldCheck,
+  MapPinned,
   Send,
+  ShieldCheck,
   Sparkles,
   TimerReset,
   UserRound,
-  Waves,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import './App.css'
@@ -45,17 +40,15 @@ type Region = {
   tone: string
   insight: string
   causes: string[]
-  practices: string[]
+  solutions: string[]
   keywords: string[]
   detail?: boolean
 }
 
-type LayerId = 'language' | 'body' | 'context'
-type InterviewStageId = 'safety' | 'pattern' | 'context' | 'action'
 type ChatMessage = {
   sender: 'bot' | 'user'
   text: string
-  tone?: 'normal' | 'warning'
+  warning?: boolean
 }
 
 const regions: Region[] = [
@@ -65,9 +58,9 @@ const regions: Region[] = [
     x: 50,
     y: 10,
     tone: '#f97316',
-    insight: 'sobrecarga cognitiva, vigilancia e fadiga decisional',
+    insight: 'sobrecarga mental, pouco descanso ou preocupacao persistente',
     causes: ['sono irregular', 'ruminacao', 'pressao de desempenho'],
-    practices: ['2 min de respiracao nasal', 'pausa sem ecra', 'diario de preocupacoes'],
+    solutions: ['beber agua e descansar 10 min', 'respirar devagar por 2 min', 'escrever a preocupacao principal'],
     keywords: ['cabeca', 'enxaqueca', 'testa', 'pressao', 'tontura', 'migraine'],
   },
   {
@@ -76,9 +69,9 @@ const regions: Region[] = [
     x: 50,
     y: 18,
     tone: '#f59e0b',
-    insight: 'tensao contida, controlo emocional e bruxismo',
-    causes: ['raiva nao expressa', 'foco prolongado', 'stress nocturno'],
-    practices: ['desbloquear a lingua', 'massagem masseter', 'relaxamento antes de dormir'],
+    insight: 'tensao acumulada, controlo ou apertar os dentes sem notar',
+    causes: ['stress nocturno', 'raiva contida', 'foco prolongado'],
+    solutions: ['relaxar a lingua', 'massajar o maxilar', 'evitar ecra antes de dormir'],
     keywords: ['maxilar', 'mandibula', 'dentes', 'bruxismo', 'jaw'],
   },
   {
@@ -87,9 +80,9 @@ const regions: Region[] = [
     x: 50,
     y: 23,
     tone: '#0ea5e9',
-    insight: 'controlo, vigilancia, rigidez defensiva e dificuldade em ceder',
-    causes: ['tensao postural', 'hipervigilancia', 'carga mental'],
-    practices: ['mobilidade cervical lenta', 'baixar o queixo em expiracao', 'pausa de ecras'],
+    insight: 'rigidez, alerta constante ou excesso de carga mental',
+    causes: ['postura', 'hipervigilancia', 'muito tempo ao computador'],
+    solutions: ['rodar o pescoco devagar', 'baixar ombros ao expirar', 'fazer pausa de ecras'],
     keywords: ['pescoco', 'nuca', 'cervical', 'torcicolo', 'neck'],
     detail: true,
   },
@@ -99,32 +92,10 @@ const regions: Region[] = [
     x: 50,
     y: 31,
     tone: '#ef4444',
-    insight: 'alarme autonomico, ansiedade e necessidade de seguranca',
-    causes: ['ansiedade', 'luto', 'hipervigilancia', 'sobrecarga emocional'],
-    practices: ['expiracao longa', 'contactar alguem seguro', 'avaliar sinais de urgencia'],
+    insight: 'alarme do corpo, ansiedade ou necessidade de seguranca',
+    causes: ['ansiedade', 'luto', 'sobrecarga emocional', 'stress'],
+    solutions: ['expirar mais devagar', 'contactar alguem de confianca', 'verificar sinais de urgencia'],
     keywords: ['peito', 'coracao', 'aperto', 'falta de ar', 'respirar', 'chest'],
-  },
-  {
-    id: 'stomach',
-    label: 'Estomago',
-    x: 50,
-    y: 45,
-    tone: '#22c55e',
-    insight: 'stress digestivo, antecipacao e dificuldade em processar',
-    causes: ['antecipacao', 'conflito', 'alimentacao irregular', 'ansiedade social'],
-    practices: ['refeicao lenta', 'calor abdominal', 'nomear a preocupacao'],
-    keywords: ['estomago', 'barriga', 'nausea', 'digestao', 'intestino', 'abdomen'],
-  },
-  {
-    id: 'pelvis',
-    label: 'Pelve',
-    x: 50,
-    y: 61,
-    tone: '#a855f7',
-    insight: 'seguranca, limites, intimidade e contraccao defensiva',
-    causes: ['medo de exposicao', 'pressao relacional', 'historial de dor'],
-    practices: ['relaxamento do pavimento pelvico', 'movimento suave', 'mapear limites'],
-    keywords: ['pelve', 'pelvico', 'anca', 'baixo ventre', 'sexual', 'hip'],
   },
   {
     id: 'shoulders',
@@ -132,10 +103,32 @@ const regions: Region[] = [
     x: 50,
     y: 27,
     tone: '#06b6d4',
-    insight: 'responsabilidade acumulada e estado de prontidao',
-    causes: ['carga de trabalho', 'postura defensiva', 'perfeccionismo'],
-    practices: ['baixar ombros em expiracao', 'delegar uma tarefa', 'alongar trapezio'],
-    keywords: ['ombro', 'ombros', 'pescoco', 'trapezio', 'neck', 'shoulder'],
+    insight: 'responsabilidade acumulada ou sensacao de carregar demasiado',
+    causes: ['trabalho', 'perfeccionismo', 'postura defensiva'],
+    solutions: ['baixar os ombros 5 vezes', 'delegar uma tarefa', 'alongar trapezios'],
+    keywords: ['ombro', 'ombros', 'trapezio', 'shoulder'],
+  },
+  {
+    id: 'back',
+    label: 'Costas',
+    x: 50,
+    y: 41,
+    tone: '#3b82f6',
+    insight: 'falta de suporte, tensao muscular ou peso emocional',
+    causes: ['sentir-se sozinho', 'pressao financeira', 'muitas horas sentado'],
+    solutions: ['caminhar 5 minutos', 'pedir ajuda concreta', 'mobilizar costas devagar'],
+    keywords: ['costas', 'lombar', 'coluna', 'dorsal', 'back', 'sciatica'],
+  },
+  {
+    id: 'stomach',
+    label: 'Estomago',
+    x: 50,
+    y: 45,
+    tone: '#22c55e',
+    insight: 'antecipacao, ansiedade social ou dificuldade em processar algo',
+    causes: ['reunioes', 'conflito', 'alimentacao irregular'],
+    solutions: ['comer devagar', 'colocar calor na barriga', 'nomear o que preocupa'],
+    keywords: ['estomago', 'barriga', 'nausea', 'digestao', 'intestino', 'abdomen'],
   },
   {
     id: 'elbows',
@@ -143,9 +136,9 @@ const regions: Region[] = [
     x: 25,
     y: 48,
     tone: '#0891b2',
-    insight: 'flexibilidade, resistencia a mudar direccao e esforco repetitivo',
-    causes: ['sobrecarga repetitiva', 'dificuldade em adaptar', 'tensao de produtividade'],
-    practices: ['descanso de carga', 'movimento circular suave', 'pergunta de flexibilidade'],
+    insight: 'esforco repetido, pouca flexibilidade ou pressa para concluir',
+    causes: ['sobrecarga repetitiva', 'tensao de produtividade', 'dificuldade em adaptar'],
+    solutions: ['descansar a carga', 'mexer o cotovelo sem dor', 'abrandar uma tarefa'],
     keywords: ['cotovelo', 'cotovelos', 'epicondilite', 'tendinite', 'elbow'],
     detail: true,
   },
@@ -155,22 +148,11 @@ const regions: Region[] = [
     x: 17,
     y: 60,
     tone: '#0d9488',
-    insight: 'controlo fino, excesso de execucao e fronteira entre fazer e parar',
-    causes: ['sobrecarga digital', 'gestos repetitivos', 'pressao de entrega'],
-    practices: ['pausa de teclado', 'mobilidade do punho', 'reduzir micro-tarefas'],
+    insight: 'excesso de execucao, computador ou dificuldade em parar',
+    causes: ['teclado', 'gestos repetitivos', 'pressao de entrega'],
+    solutions: ['pausar teclado', 'rodar punhos devagar', 'reduzir micro-tarefas'],
     keywords: ['pulso', 'pulsos', 'punho', 'carpo', 'tendinite', 'wrist'],
     detail: true,
-  },
-  {
-    id: 'back',
-    label: 'Costas',
-    x: 50,
-    y: 41,
-    tone: '#3b82f6',
-    insight: 'suporte percebido, medo de falhar e tensao muscular',
-    causes: ['pressao financeira', 'falta de apoio', 'longos periodos sentado'],
-    practices: ['caminhada curta', 'check-in de suporte', 'mobilidade toracica'],
-    keywords: ['costas', 'lombar', 'coluna', 'dorsal', 'back', 'sciatica'],
   },
   {
     id: 'hands',
@@ -178,10 +160,21 @@ const regions: Region[] = [
     x: 29,
     y: 57,
     tone: '#14b8a6',
-    insight: 'controlo, produtividade e dificuldade em largar',
+    insight: 'controlo, produtividade ou dificuldade em largar algo',
     causes: ['sobrecarga digital', 'tensao de controlo', 'medo de parar'],
-    practices: ['descanso tactil', 'alternar tarefas', 'aquecimento das maos'],
-    keywords: ['mao', 'maos', 'dedos', 'pulso', 'formigueiro', 'hand'],
+    solutions: ['aquecer as maos', 'fechar e abrir dedos', 'fazer pausa tactil'],
+    keywords: ['mao', 'maos', 'dedos', 'formigueiro', 'hand'],
+  },
+  {
+    id: 'pelvis',
+    label: 'Pelve',
+    x: 50,
+    y: 61,
+    tone: '#a855f7',
+    insight: 'limites, seguranca, intimidade ou contraccao defensiva',
+    causes: ['medo de exposicao', 'pressao relacional', 'historial de dor'],
+    solutions: ['movimento suave', 'relaxar pavimento pelvico', 'mapear limites'],
+    keywords: ['pelve', 'pelvico', 'anca', 'baixo ventre', 'sexual'],
   },
   {
     id: 'hips',
@@ -189,9 +182,9 @@ const regions: Region[] = [
     x: 62,
     y: 66,
     tone: '#8b5cf6',
-    insight: 'transicao, estabilidade e medo de avancar ou mudar posicao',
-    causes: ['rigidez por sedentarismo', 'decisoes adiadas', 'tensao relacional'],
-    practices: ['balanco lateral', 'pergunta sobre mudanca', 'mobilidade de anca'],
+    insight: 'transicao, estabilidade ou medo de avancar',
+    causes: ['sedentarismo', 'decisoes adiadas', 'mudancas recentes'],
+    solutions: ['balancar ancas devagar', 'dar uma caminhada curta', 'escolher um proximo passo'],
     keywords: ['anca', 'ancas', 'quadril', 'hip'],
     detail: true,
   },
@@ -201,11 +194,22 @@ const regions: Region[] = [
     x: 40,
     y: 78,
     tone: '#65a30d',
-    insight: 'suporte, humildade, direccao e pressao para continuar',
+    insight: 'suporte, direccao ou pressao para continuar sem pausa',
     causes: ['sobrecarga mecanica', 'medo de ceder', 'dificuldade em pedir apoio'],
-    practices: ['reduzir impacto', 'check-in de suporte', 'pergunta de direccao'],
+    solutions: ['reduzir impacto', 'observar se ha inchaco', 'pedir apoio numa decisao'],
     keywords: ['joelho', 'joelhos', 'rotula', 'menisco', 'ligamento', 'knee'],
     detail: true,
+  },
+  {
+    id: 'legs',
+    label: 'Pernas',
+    x: 61,
+    y: 82,
+    tone: '#84cc16',
+    insight: 'energia bloqueada, cansaco ou necessidade de movimento',
+    causes: ['sedentarismo', 'decisoes adiadas', 'energia ansiosa'],
+    solutions: ['andar 5 minutos', 'contrair e soltar', 'definir o proximo passo'],
+    keywords: ['perna', 'pernas', 'coxa', 'gemeo', 'cansaco', 'leg'],
   },
   {
     id: 'ankles',
@@ -213,9 +217,9 @@ const regions: Region[] = [
     x: 40,
     y: 91,
     tone: '#a3e635',
-    insight: 'adaptacao, equilibrio e confianca no proximo passo',
-    causes: ['instabilidade percebida', 'mudancas recentes', 'receio de avancar'],
-    practices: ['equilibrio apoiado', 'passo minimo seguro', 'mapear instabilidade'],
+    insight: 'equilibrio, adaptacao ou inseguranca no proximo passo',
+    causes: ['instabilidade', 'mudancas recentes', 'receio de avancar'],
+    solutions: ['equilibrio apoiado', 'dar passos pequenos', 'reduzir pressa'],
     keywords: ['tornozelo', 'tornozelos', 'entorse', 'ankle'],
     detail: true,
   },
@@ -225,322 +229,66 @@ const regions: Region[] = [
     x: 61,
     y: 96,
     tone: '#bef264',
-    insight: 'base, direccao, aterramento e cansaco de sustentar',
-    causes: ['fadiga acumulada', 'falta de enraizamento', 'pressao de movimento'],
-    practices: ['sentir a planta dos pes', 'andar devagar', 'reduzir carga'],
-    keywords: ['pe', 'pes', 'planta', 'calcanhar', 'dedo do pe', 'foot', 'feet'],
+    insight: 'base, aterramento ou cansaco de sustentar tudo',
+    causes: ['fadiga acumulada', 'pressao de movimento', 'pouco descanso'],
+    solutions: ['sentir a planta dos pes', 'andar devagar', 'reduzir carga'],
+    keywords: ['pe', 'pes', 'planta', 'calcanhar', 'foot', 'feet'],
     detail: true,
-  },
-  {
-    id: 'legs',
-    label: 'Pernas',
-    x: 61,
-    y: 82,
-    tone: '#84cc16',
-    insight: 'impulso travado, inquietacao e necessidade de movimento',
-    causes: ['decisoes adiadas', 'sedentarismo', 'energia ansiosa'],
-    practices: ['andar 5 minutos', 'contrair e soltar', 'definir proximo passo'],
-    keywords: ['perna', 'pernas', 'coxa', 'gemeo', 'cansaco', 'leg'],
   },
 ]
 
-const presets = [
+const starters = [
   'Aperto no peito quando penso no trabalho',
   'Dor lombar ha semanas e sinto que carrego tudo sozinho',
   'Dor no cotovelo quando tento acabar tudo rapido',
   'Joelho doi quando penso em mudar de direccao',
-  'Nausea antes de reunioes importantes',
-  'Maxilar preso ao acordar e dores de cabeca',
 ]
 
-const competitorSignals = [
-  'Curable: coach guiado e educacao sobre dor persistente',
-  'Pathways: programa mind-body estruturado',
-  'Bearable: tracking e correlacoes de sintomas',
-  'Lin Health: abordagem biopsicossocial com suporte humano',
-]
+const redFlagWords = ['falta de ar', 'desmaio', 'fraqueza', 'febre', 'subita', 'insuportavel', 'perda de forca']
+const emotionalWords = ['ansiedade', 'medo', 'pressao', 'trabalho', 'sozinho', 'carrego', 'stress', 'rapido', 'mudar']
 
-const layerCopy = {
-  language: {
-    icon: Activity,
-    label: 'Linguagem da dor',
-    title: 'Como a pessoa descreve a dor',
-    explainer:
-      'Extrai palavras de intensidade, tempo, pressao e perda de controlo. Isto ajuda a distinguir dor aguda, dor persistente e dor associada a ameaca percebida.',
-  },
-  body: {
-    icon: Radar,
-    label: 'Zona corporal',
-    title: 'Onde o corpo esta a chamar atencao',
-    explainer:
-      'Cruza a regiao escolhida no mapa com palavras anatomicas no texto. O mapa deixa de ser decorativo e passa a ser uma segunda fonte de sinal.',
-  },
-  context: {
-    icon: Waves,
-    label: 'Contexto emocional',
-    title: 'Que historia pode estar por baixo',
-    explainer:
-      'Procura pistas de trabalho, relacao, medo, carga, isolamento e antecipacao para gerar perguntas melhores, nao conclusoes fechadas.',
-  },
-} satisfies Record<LayerId, { icon: typeof Activity; label: string; title: string; explainer: string }>
-
-const emotionalLexicon = [
-  'ansiedade',
-  'medo',
-  'pressao',
-  'trabalho',
-  'sozinho',
-  'carrego',
-  'luto',
-  'raiva',
-  'reunioes',
-  'importantes',
-  'acordar',
-  'stress',
-  'rapido',
-  'mudar',
-  'direccao',
-  'apoio',
-]
-
-const intensityLexicon = ['aperto', 'preso', 'pressao', 'forte', 'intensa', 'semanas', 'sempre', 'acordar', 'doi', 'dor']
-
-const interviewStages: Array<{
-  id: InterviewStageId
-  label: string
-  goal: string
-  quickReplies: string[]
-}> = [
-  {
-    id: 'safety',
-    label: 'Seguranca',
-    goal: 'Excluir sinais que pedem avaliacao medica antes de qualquer leitura psicossomatica.',
-    quickReplies: ['Nao tenho red flags', 'Dor subita ou insuportavel', 'Tenho falta de ar ou fraqueza'],
-  },
-  {
-    id: 'pattern',
-    label: 'Padrao',
-    goal: 'Perceber quando aparece, o que agrava e que tipo de dor e.',
-    quickReplies: ['Aparece mais no trabalho', 'Piora quando estou parado', 'Vem em ondas'],
-  },
-  {
-    id: 'context',
-    label: 'Contexto',
-    goal: 'Ligar o sintoma a carga, relacoes, decisoes, medo ou suporte percebido.',
-    quickReplies: ['Tenho medo de mudar de direccao', 'Sinto que carrego tudo sozinho', 'Estou a tentar controlar tudo'],
-  },
-  {
-    id: 'action',
-    label: 'Plano',
-    goal: 'Escolher uma micro-accao segura para testar a hipotese sem prometer cura.',
-    quickReplies: ['Quero uma pratica de 2 minutos', 'Quero uma pergunta de journaling', 'Quero saber quando procurar ajuda'],
-  },
-]
-
-function scoreRegion(region: Region, text: string, selected: RegionId) {
-  const normalized = text.toLowerCase()
-  const keywordHits = region.keywords.filter((keyword) => normalized.includes(keyword)).length
-  const selectedBoost = region.id === selected ? 1.1 : 0
-  const emotionalHits = emotionalLexicon.filter((keyword) => normalized.includes(keyword)).length
-
-  return selectedBoost + keywordHits * 1.8 + emotionalHits * 0.32
+function normalize(text: string) {
+  return text.toLowerCase()
 }
 
-function confidence(score: number) {
-  return Math.min(94, Math.round(52 + score * 12))
+function hasRedFlag(text: string) {
+  const normalized = normalize(text)
+  return redFlagWords.some((word) => normalized.includes(word))
+}
+
+function scoreRegion(region: Region, text: string, selected: RegionId) {
+  const normalized = normalize(text)
+  const keywordHits = region.keywords.filter((keyword) => normalized.includes(keyword)).length
+  const emotionHits = emotionalWords.filter((keyword) => normalized.includes(keyword)).length
+  const selectedBoost = region.id === selected ? 1.2 : 0
+
+  return keywordHits * 2 + emotionHits * 0.25 + selectedBoost
 }
 
 function inferRegionFromText(text: string) {
   const ranked = regions
-    .map((region) => ({
-      region,
-      hits: region.keywords.filter((keyword) => text.toLowerCase().includes(keyword)).length,
-    }))
-    .sort((a, b) => b.hits - a.hits)
+    .map((region) => ({ region, score: scoreRegion(region, text, region.id) }))
+    .sort((a, b) => b.score - a.score)
 
-  return ranked[0]?.hits > 0 ? ranked[0].region.id : null
+  return ranked[0].score > 1.2 ? ranked[0].region.id : null
 }
 
-function practicePlan(practice: string, region: Region) {
-  const normalized = practice.toLowerCase()
+function confidence(score: number) {
+  return Math.min(92, Math.round(50 + score * 14))
+}
 
-  if (normalized.includes('urgencia')) {
+function botReply(text: string, region: Region) {
+  if (hasRedFlag(text)) {
     return {
-      title: 'Triagem de seguranca',
-      why: 'Quando ha sinais de alarme, a app deve interromper a narrativa psicossomatica e orientar para avaliacao medica.',
-      steps: ['Verificar intensidade, inicio subito e sintomas associados', 'Se houver falta de ar, fraqueza ou dor forte, procurar ajuda', 'Registar o episodio para futura consulta'],
-    }
-  }
-
-  if (normalized.includes('respir') || normalized.includes('expiracao')) {
-    return {
-      title: 'Regulacao respiratoria',
-      why: `Ajuda a reduzir alarme autonomico associado a ${region.label.toLowerCase()} antes de interpretar a dor.`,
-      steps: ['Inspirar pelo nariz durante 4 segundos', 'Expirar mais devagar durante 6 a 8 segundos', 'Repetir 8 ciclos e reavaliar a sensacao'],
-    }
-  }
-
-  if (normalized.includes('diario') || normalized.includes('nomear') || normalized.includes('limites')) {
-    return {
-      title: 'Nomear o padrao',
-      why: 'Transforma uma sensacao difusa numa hipotese observavel, reduzindo a necessidade de o corpo carregar o sinal sozinho.',
-      steps: ['Escrever a frase: "esta dor aparece quando..."', 'Identificar uma emocao e uma necessidade', 'Escolher uma accao pequena para as proximas 2 horas'],
+      warning: true,
+      text: 'Isto pode precisar de avaliacao medica. Antes de procurar uma causa emocional, confirma estes sintomas com um profissional.',
     }
   }
 
   return {
-    title: 'Intervencao somatica curta',
-    why: `Cria uma experiencia de seguranca local na zona ${region.label.toLowerCase()} sem prometer cura nem diagnostico.`,
-    steps: ['Observar a zona durante 20 segundos sem tentar corrigir', 'Fazer movimento suave dentro de conforto', 'Comparar intensidade antes/depois numa escala 0-10'],
+    warning: false,
+    text: `Entendi. Vou olhar para ${region.label.toLowerCase()} e para o contexto que descreveste. Abaixo tens causas possiveis e um primeiro passo simples.`,
   }
-}
-
-function nextQuestion(region: Region, layer: LayerId) {
-  if (layer === 'body') {
-    return `A dor em ${region.label.toLowerCase()} parece mais pontual, difusa, mecanica ou aparece em momentos emocionais especificos?`
-  }
-
-  if (layer === 'context') {
-    return `O que estava a acontecer na tua vida quando a dor em ${region.label.toLowerCase()} comecou ou piorou?`
-  }
-
-  return `Numa escala 0-10, quao intensa e a dor em ${region.label.toLowerCase()} agora, e ha quanto tempo existe?`
-}
-
-function hasRedFlag(answer: string) {
-  const normalized = answer.toLowerCase()
-
-  return ['falta de ar', 'desmaio', 'fraqueza', 'febre', 'subita', 'insuportavel'].some((word) =>
-    normalized.includes(word),
-  )
-}
-
-function extractSignals(answer: string) {
-  const normalized = answer.toLowerCase()
-  const signals = [
-    ['trabalho', 'pressao de trabalho'],
-    ['rapido', 'urgencia/produtividade'],
-    ['sozinho', 'baixo suporte percebido'],
-    ['carrego', 'carga acumulada'],
-    ['mudar', 'transicao/direccao'],
-    ['direccao', 'decisao pendente'],
-    ['controlar', 'controlo elevado'],
-    ['parado', 'imobilidade/ruminacao'],
-  ]
-
-  return signals.filter(([keyword]) => normalized.includes(keyword)).map(([, label]) => label)
-}
-
-function chatReply(answer: string, region: Region, layer: LayerId, stage: InterviewStageId) {
-  const normalized = answer.toLowerCase()
-
-  if (hasRedFlag(answer)) {
-    return {
-      tone: 'warning' as const,
-      text: 'Isto entra em zona de seguranca: antes de qualquer leitura emocional, faz sentido procurar avaliacao medica ou apoio urgente.',
-    }
-  }
-
-  if (stage === 'safety') {
-    return {
-      tone: 'normal' as const,
-      text: `Boa. Sem red flags declaradas, posso explorar ${region.label.toLowerCase()} como padrao corpo-contexto. Proxima etapa: quando aparece ou piora?`,
-    }
-  }
-
-  if (normalized.includes('trabalho') || normalized.includes('pressao') || normalized.includes('rapido')) {
-    return {
-      tone: 'normal' as const,
-      text: `Estou a ler um padrao de exigencia/ritmo. Para ${region.label.toLowerCase()}, eu perguntaria: que tarefa, expectativa ou limite o corpo pode estar a tentar travar?`,
-    }
-  }
-
-  if (normalized.includes('mudar') || normalized.includes('decidir') || normalized.includes('direccao')) {
-    return {
-      tone: 'normal' as const,
-      text: `A tua resposta aponta para transicao. Em ${region.label.toLowerCase()}, isso pode ser explorado como suporte, flexibilidade e medo do proximo passo.`,
-    }
-  }
-
-  if (stage === 'action') {
-    return {
-      tone: 'normal' as const,
-      text: `Plano de teste: escolhe uma pratica curta, mede a intensidade antes/depois e regista se a dor em ${region.label.toLowerCase()} muda quando ha mais seguranca ou suporte.`,
-    }
-  }
-
-  return {
-    tone: 'normal' as const,
-    text: `Obrigado. Com este detalhe, eu refinaria a hipotese para ${region.label.toLowerCase()} e perguntaria a seguir: ${nextQuestion(region, layer)}`,
-  }
-}
-
-function LayerInsight({
-  layer,
-  description,
-  selectedRegion,
-  rankedRegions,
-}: {
-  layer: LayerId
-  description: string
-  selectedRegion: Region
-  rankedRegions: { region: Region; score: number }[]
-}) {
-  const normalized = description.toLowerCase()
-  const intensityHits = intensityLexicon.filter((word) => normalized.includes(word))
-  const emotionalHits = emotionalLexicon.filter((word) => normalized.includes(word))
-  const bodyHits = regions.flatMap((region) =>
-    region.keywords.filter((keyword) => normalized.includes(keyword)).map((keyword) => `${keyword} -> ${region.label}`),
-  )
-
-  if (layer === 'language') {
-    return (
-      <div className="layer-card">
-        <div className="layer-title">
-          <ListChecks size={17} />
-          Sinais detectados no texto
-        </div>
-        <div className="signal-grid">
-          <span>Intensidade: {intensityHits.length ? intensityHits.join(', ') : 'baixa/nao explicita'}</span>
-          <span>Tempo: {normalized.includes('semanas') ? 'persistente' : 'nao especificado'}</span>
-          <span>Forma: {normalized.includes('aperto') ? 'contraccao/aperto' : 'descritor livre'}</span>
-        </div>
-        <p>Proxima pergunta sugerida: a dor aumenta quando tentas controlar, agradar ou antecipar alguma coisa?</p>
-      </div>
-    )
-  }
-
-  if (layer === 'body') {
-    return (
-      <div className="layer-card">
-        <div className="layer-title">
-          <ListChecks size={17} />
-          Correspondencia corpo-texto
-        </div>
-        <div className="signal-grid">
-          <span>Zona escolhida: {selectedRegion.label}</span>
-          <span>Texto detectou: {bodyHits.length ? bodyHits.slice(0, 3).join(', ') : 'sem zona explicita'}</span>
-          <span>Alternativas: {rankedRegions.slice(1, 3).map(({ region }) => region.label).join(' / ')}</span>
-        </div>
-        <p>Clicar noutra zona do corpo recalcula a hipotese, mas o texto continua a ter prioridade.</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="layer-card">
-      <div className="layer-title">
-        <MessageCircleQuestion size={17} />
-        Hipoteses emocionais para entrevista
-      </div>
-      <div className="signal-grid">
-        <span>Pistas: {emotionalHits.length ? emotionalHits.join(', ') : 'ainda poucas'}</span>
-        <span>Estado provavel: {emotionalHits.length > 2 ? 'sobrecarga' : 'exploratorio'}</span>
-        <span>Risco narrativo: evitar causalidade rigida</span>
-      </div>
-      <p>Proxima pergunta sugerida: se esta dor pudesse proteger-te de uma conversa, decisao ou limite, qual seria?</p>
-    </div>
-  )
 }
 
 function BodyMap({
@@ -569,17 +317,17 @@ function BodyMap({
           d="M76 163 36 275c-7 20-5 42 6 60l41 67c8 13 25 17 38 10 13-8 18-25 10-38l-35-59 30-89"
           fill="none"
           stroke="#cbd5e1"
-          strokeWidth="35"
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeWidth="35"
         />
         <path
           d="M184 163 224 275c7 20 5 42-6 60l-41 67c-8 13-25 17-38 10-13-8-18-25-10-38l35-59-30-89"
           fill="none"
           stroke="#cbd5e1"
-          strokeWidth="35"
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeWidth="35"
         />
       </svg>
       {regions.map((region) => (
@@ -605,85 +353,55 @@ function BodyMap({
 
 function App() {
   const [selectedRegion, setSelectedRegion] = useState<RegionId>('chest')
-  const [description, setDescription] = useState(presets[0])
-  const [activeLayer, setActiveLayer] = useState<LayerId>('language')
-  const [activePractice, setActivePractice] = useState('')
-  const [chatDraft, setChatDraft] = useState('')
-  const [interviewStep, setInterviewStep] = useState(0)
-  const [safetyStatus, setSafetyStatus] = useState<'clear' | 'warning'>('clear')
-  const [sessionSignals, setSessionSignals] = useState<string[]>([])
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+  const [draft, setDraft] = useState('')
+  const [latestText, setLatestText] = useState(starters[0])
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'bot',
-      text: 'Sou a sessao guiada. Escolhe uma zona ou descreve melhor a dor e eu faco a proxima pergunta util.',
+      text: 'Diz-me onde doi e quando aparece. Eu ajudo-te a explorar causas possiveis e um primeiro passo.',
     },
   ])
 
   const analysis = useMemo(() => {
     const ranked = regions
-      .map((region) => ({ region, score: scoreRegion(region, description, selectedRegion) }))
+      .map((region) => ({ region, score: scoreRegion(region, latestText, selectedRegion) }))
       .sort((a, b) => b.score - a.score)
 
-    const primary = ranked[0]
-    const secondary = ranked.slice(1, 4)
-
     return {
-      primary,
-      secondary,
-      ranked,
-      confidence: confidence(primary.score),
+      primary: ranked[0],
+      related: ranked.slice(1, 3),
+      confidence: confidence(ranked[0].score),
+      warning: hasRedFlag(latestText),
     }
-  }, [description, selectedRegion])
+  }, [latestText, selectedRegion])
 
-  const selectedRegionData = regions.find((region) => region.id === selectedRegion) ?? analysis.primary.region
-  const activePracticeLabel = analysis.primary.region.practices.includes(activePractice)
-    ? activePractice
-    : analysis.primary.region.practices[0]
-  const activePracticePlan = practicePlan(activePracticeLabel, analysis.primary.region)
-  const currentStage = interviewStages[interviewStep]
-  const interviewProgress = Math.round(((interviewStep + 1) / interviewStages.length) * 100)
-  const quickReplies = Array.from(
-    new Set([nextQuestion(analysis.primary.region, activeLayer), ...currentStage.quickReplies, 'Aparece mais no trabalho']),
-  ).slice(0, 4)
-
-  function applyPreset(preset: string) {
-    setDescription(preset)
-    const inferred = inferRegionFromText(preset)
-    if (inferred) {
-      setSelectedRegion(inferred)
-    }
-  }
-
-  function sendChatMessage(text = chatDraft) {
+  function submitText(text: string) {
     const cleanText = text.trim()
     if (!cleanText) {
       return
     }
 
-    const reply = chatReply(cleanText, analysis.primary.region, activeLayer, currentStage.id)
-    const nextSignals = extractSignals(cleanText)
+    const inferred = inferRegionFromText(cleanText)
+    const nextRegionId = inferred ?? selectedRegion
+    const nextRegion = regions.find((region) => region.id === nextRegionId) ?? analysis.primary.region
+    const reply = botReply(cleanText, nextRegion)
 
-    if (hasRedFlag(cleanText)) {
-      setSafetyStatus('warning')
-    }
-
-    if (nextSignals.length) {
-      setSessionSignals((signals) => Array.from(new Set([...signals, ...nextSignals])).slice(0, 5))
-    }
-
-    setChatMessages((messages) => [
-      ...messages,
+    setLatestText(cleanText)
+    setSelectedRegion(nextRegionId)
+    setMessages((current) => [
+      ...current.slice(-3),
       { sender: 'user', text: cleanText },
-      { sender: 'bot', text: reply.text, tone: reply.tone },
+      { sender: 'bot', text: reply.text, warning: reply.warning },
     ])
-    setInterviewStep((step) => (step < interviewStages.length - 1 && !hasRedFlag(cleanText) ? step + 1 : step))
-    setChatDraft('')
+    setDraft('')
   }
+
+  const activeRegion = analysis.primary.region
 
   return (
     <main className="app">
       <section className="workspace">
-        <div className="topbar">
+        <header className="topbar">
           <div className="brand-mark">
             <Brain size={20} />
             SomaSignal
@@ -692,148 +410,105 @@ function App() {
             <ShieldCheck size={16} />
             Exploratorio, nao diagnostico
           </div>
-        </div>
+        </header>
 
-        <div className="hero-grid">
-          <section className="left-panel">
+        <section className="intro">
+          <div>
             <div className="eyebrow">
               <Sparkles size={16} />
-              Mapa de sintomas psicossomaticos
+              Mapa de sintomas
             </div>
-            <h1>Transforma uma dor vaga numa hipotese emocional accionavel.</h1>
-            <p className="lead">
-              Um mockup de produto para captar sinais de dor, linguagem emocional e contexto de vida, devolvendo
-              hipoteses provaveis com praticas de regulacao e red flags clinicas.
+            <h1>Onde doi? O que pode estar por tras?</h1>
+            <p>
+              Escolhe uma zona do corpo ou escreve no chat. A app sugere causas possiveis e passos simples para
+              explorar com seguranca.
             </p>
+          </div>
+        </section>
 
-            <div className="input-stack">
-              <label htmlFor="pain-text">Descreve a dor</label>
-              <textarea
-                id="pain-text"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={5}
-              />
-              <div className="preset-row">
-                {presets.map((preset) => (
-                  <button key={preset} type="button" onClick={() => applyPreset(preset)}>
-                    {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="signals">
-              {(Object.keys(layerCopy) as LayerId[]).map((layer) => {
-                const Icon = layerCopy[layer].icon
-
-                return (
-                  <button
-                    className={activeLayer === layer ? 'is-active' : ''}
-                    key={layer}
-                    type="button"
-                    onClick={() => setActiveLayer(layer)}
-                  >
-                    <Icon size={18} />
-                    {layerCopy[layer].label}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="layer-explainer">
-              <strong>{layerCopy[activeLayer].title}</strong>
-              <p>{layerCopy[activeLayer].explainer}</p>
-            </div>
-          </section>
-
+        <section className="app-grid">
           <section className="map-panel">
+            <div className="panel-title">
+              <MapPinned size={18} />
+              <span>1. Escolhe a zona</span>
+            </div>
             <BodyMap active={selectedRegion} setActive={setSelectedRegion} />
           </section>
 
-          <section className="analysis-panel">
-            <div className="panel-heading">
-              <span>Interpretacao provavel</span>
-              <strong>{analysis.confidence}%</strong>
+          <section className="chat-panel">
+            <div className="panel-title">
+              <Bot size={18} />
+              <span>2. Conta-me o que sentes</span>
             </div>
-            <div className="result-card" style={{ ['--tone' as string]: analysis.primary.region.tone }}>
+
+            <div className="chat-thread">
+              {messages.map((message, index) => (
+                <div className={`chat-message ${message.sender} ${message.warning ? 'is-warning' : ''}`} key={index}>
+                  {message.sender === 'bot' ? <Bot size={16} /> : <UserRound size={16} />}
+                  <p>{message.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="starter-row">
+              {starters.map((starter) => (
+                <button key={starter} type="button" onClick={() => submitText(starter)}>
+                  {starter}
+                </button>
+              ))}
+            </div>
+
+            <form
+              className="chat-input"
+              onSubmit={(event) => {
+                event.preventDefault()
+                submitText(draft)
+              }}
+            >
+              <input
+                aria-label="Descrever dor"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Ex: doi-me o joelho quando subo escadas..."
+              />
+              <button type="submit" aria-label="Enviar">
+                <Send size={17} />
+              </button>
+            </form>
+          </section>
+
+          <section className="result-panel">
+            <div className="panel-title">
+              <HeartPulse size={18} />
+              <span>3. Causas e solucoes</span>
+            </div>
+
+            <div className="result-card" style={{ ['--tone' as string]: activeRegion.tone }}>
               <div className="result-icon">
                 <HeartPulse size={24} />
               </div>
               <div>
-                <h2>{analysis.primary.region.label}</h2>
-                <p>{analysis.primary.region.insight}</p>
+                <strong>{analysis.confidence}% provavel</strong>
+                <h2>{activeRegion.label}</h2>
+                <p>{activeRegion.insight}</p>
               </div>
             </div>
 
-            <LayerInsight
-              layer={activeLayer}
-              description={description}
-              selectedRegion={selectedRegionData}
-              rankedRegions={analysis.ranked}
-            />
+            {analysis.warning ? (
+              <div className="safety-note priority">
+                <AlertTriangle size={18} />
+                Alguns sinais merecem avaliacao medica. Esta app nao substitui urgencia, medico ou diagnostico.
+              </div>
+            ) : (
+              <div className="safety-note">
+                <AlertTriangle size={18} />
+                Se a dor for forte, subita, vier com falta de ar, febre, perda de forca ou desmaio, procura ajuda medica.
+              </div>
+            )}
 
-            <div className="chat-card">
-              <div className="chat-heading">
-                <Bot size={18} />
-                <span>Sessao guiada</span>
-                <small>etapa {interviewStep + 1}/4</small>
-              </div>
-              <div className="interview-progress" aria-label={`Progresso da entrevista ${interviewProgress}%`}>
-                <span style={{ width: `${interviewProgress}%` }} />
-              </div>
-              <div className="interview-stage">
-                <strong>{currentStage.label}</strong>
-                <p>{currentStage.goal}</p>
-              </div>
-              <div className="chat-thread">
-                {chatMessages.slice(-3).map((message, index) => (
-                  <div
-                    className={`chat-message ${message.sender} ${message.tone === 'warning' ? 'is-warning' : ''}`}
-                    key={`${message.sender}-${index}-${message.text}`}
-                  >
-                    {message.sender === 'bot' ? <Bot size={15} /> : <UserRound size={15} />}
-                    <p>{message.text}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="quick-replies">
-                {quickReplies.map((reply) => (
-                  <button key={reply} type="button" onClick={() => sendChatMessage(reply)}>
-                    {reply}
-                  </button>
-                ))}
-              </div>
-              <form
-                className="chat-input"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  sendChatMessage()
-                }}
-              >
-                <input
-                  aria-label="Responder no chat"
-                  value={chatDraft}
-                  onChange={(event) => setChatDraft(event.target.value)}
-                  placeholder="Responder com mais contexto..."
-                />
-                <button type="submit" aria-label="Enviar resposta">
-                  <Send size={16} />
-                </button>
-              </form>
-              <div className={`session-summary ${safetyStatus === 'warning' ? 'is-warning' : ''}`}>
-                <span>{safetyStatus === 'warning' ? 'Red flag detectada' : 'Seguranca inicial OK'}</span>
-                <p>
-                  {sessionSignals.length
-                    ? `Pistas recolhidas: ${sessionSignals.join(', ')}.`
-                    : `Aguardando respostas para formar um padrao de ${analysis.primary.region.label.toLowerCase()}.`}
-                </p>
-              </div>
-            </div>
-
-            <div className="cause-list">
-              <span>Possiveis causas a explorar</span>
-              {analysis.primary.region.causes.map((cause) => (
+            <div className="simple-list">
+              <span>Pode estar ligado a</span>
+              {activeRegion.causes.map((cause) => (
                 <div key={cause}>
                   <CheckCircle2 size={16} />
                   {cause}
@@ -841,70 +516,22 @@ function App() {
               ))}
             </div>
 
-            <div className="practice-list">
-              <span>Primeiras micro-intervencoes</span>
-              {analysis.primary.region.practices.map((practice) => (
-                <button
-                  className={activePracticeLabel === practice ? 'is-active' : ''}
-                  key={practice}
-                  type="button"
-                  onClick={() => setActivePractice(practice)}
-                >
-                  {practice}
-                  <ArrowRight size={15} />
+            <div className="simple-list solutions">
+              <span>Experimenta agora</span>
+              {activeRegion.solutions.map((solution) => (
+                <button key={solution} type="button">
+                  <TimerReset size={16} />
+                  {solution}
                 </button>
               ))}
             </div>
 
-            <div className="practice-detail">
-              <div>
-                <TimerReset size={18} />
-                <span>{activePracticePlan.title}</span>
-              </div>
-              <p>{activePracticePlan.why}</p>
-              <ol>
-                {activePracticePlan.steps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="safety-note">
-              <AlertTriangle size={18} />
-              Dor no peito, falta de ar, perda de forca, febre ou dor intensa/subita exigem avaliacao medica.
+            <div className="next-step">
+              <strong>Proximo passo</strong>
+              <p>Observa se a intensidade muda depois da primeira acao. Se piorar ou persistir, fala com um profissional.</p>
             </div>
           </section>
-        </div>
-      </section>
-
-      <section className="investor-strip">
-        <div>
-          <span>Benchmark usado</span>
-          <h2>Curable + Bearable + body map, mas com narrativa emocional imediata.</h2>
-        </div>
-        <div className="benchmark-grid">
-          {competitorSignals.map((signal) => (
-            <article key={signal}>{signal}</article>
-          ))}
-        </div>
-      </section>
-
-      <section className="secondary-grid">
-        <article>
-          <span>Produto</span>
-          <h3>Da queixa ao padrao</h3>
-          <p>Detecta regioes, palavras emocionais e intensidade para construir um mapa pessoal de triggers.</p>
-        </article>
-        <article>
-          <span>Modelo</span>
-          <h3>Hipoteses transparentes</h3>
-          <p>Mostra factores provaveis, grau de confianca e limites da interpretacao em linguagem humana.</p>
-        </article>
-        <article>
-          <span>Monetizacao</span>
-          <h3>Plano guiado premium</h3>
-          <p>Jornadas de 14 dias, exercicios somaticos, relatorios e eventual triagem com profissionais.</p>
-        </article>
+        </section>
       </section>
     </main>
   )
