@@ -24,6 +24,15 @@ test('analysis controls update the interpretation surface', async ({ page }) => 
   await page.getByRole('button', { name: /Joelho doi/ }).click()
   await expect(page.getByRole('heading', { name: 'Joelhos' })).toBeVisible()
 
+  await expect(page.getByText('Etapa 1/4')).toBeVisible()
+  await page.getByRole('button', { name: 'Nao tenho red flags' }).click()
+  await expect(page.getByText('Etapa 2/4')).toBeVisible()
+
   await page.getByRole('button', { name: 'Aparece mais no trabalho' }).click()
   await expect(page.getByText(/padrao de exigencia\/ritmo/)).toBeVisible()
+  await expect(page.getByText(/Pistas recolhidas: pressao de trabalho/)).toBeVisible()
+
+  await page.getByLabel('Responder no chat').fill('Tenho falta de ar ou fraqueza')
+  await page.getByLabel('Enviar resposta').click()
+  await expect(page.getByText('Red flag detectada')).toBeVisible()
 })

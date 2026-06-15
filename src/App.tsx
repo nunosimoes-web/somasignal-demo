@@ -51,9 +51,11 @@ type Region = {
 }
 
 type LayerId = 'language' | 'body' | 'context'
+type InterviewStageId = 'safety' | 'pattern' | 'context' | 'action'
 type ChatMessage = {
   sender: 'bot' | 'user'
   text: string
+  tone?: 'normal' | 'warning'
 }
 
 const regions: Region[] = [
@@ -303,6 +305,38 @@ const emotionalLexicon = [
 
 const intensityLexicon = ['aperto', 'preso', 'pressao', 'forte', 'intensa', 'semanas', 'sempre', 'acordar', 'doi', 'dor']
 
+const interviewStages: Array<{
+  id: InterviewStageId
+  label: string
+  goal: string
+  quickReplies: string[]
+}> = [
+  {
+    id: 'safety',
+    label: 'Seguranca',
+    goal: 'Excluir sinais que pedem avaliacao medica antes de qualquer leitura psicossomatica.',
+    quickReplies: ['Nao tenho red flags', 'Dor subita ou insuportavel', 'Tenho falta de ar ou fraqueza'],
+  },
+  {
+    id: 'pattern',
+    label: 'Padrao',
+    goal: 'Perceber quando aparece, o que agrava e que tipo de dor e.',
+    quickReplies: ['Aparece mais no trabalho', 'Piora quando estou parado', 'Vem em ondas'],
+  },
+  {
+    id: 'context',
+    label: 'Contexto',
+    goal: 'Ligar o sintoma a carga, relacoes, decisoes, medo ou suporte percebido.',
+    quickReplies: ['Tenho medo de mudar de direccao', 'Sinto que carrego tudo sozinho', 'Estou a tentar controlar tudo'],
+  },
+  {
+    id: 'action',
+    label: 'Plano',
+    goal: 'Escolher uma micro-accao segura para testar a hipotese sem prometer cura.',
+    quickReplies: ['Quero uma pratica de 2 minutos', 'Quero uma pergunta de journaling', 'Quero saber quando procurar ajuda'],
+  },
+]
+
 function scoreRegion(region: Region, text: string, selected: RegionId) {
   const normalized = text.toLowerCase()
   const keywordHits = region.keywords.filter((keyword) => normalized.includes(keyword)).length
@@ -373,22 +407,72 @@ function nextQuestion(region: Region, layer: LayerId) {
   return `Numa escala 0-10, quao intensa e a dor em ${region.label.toLowerCase()} agora, e ha quanto tempo existe?`
 }
 
-function chatReply(answer: string, region: Region, layer: LayerId) {
+function hasRedFlag(answer: string) {
   const normalized = answer.toLowerCase()
 
-  if (['falta de ar', 'desmaio', 'fraqueza', 'febre', 'subita', 'insuportavel'].some((word) => normalized.includes(word))) {
-    return 'Isto entra em zona de seguranca: antes de qualquer leitura emocional, faz sentido procurar avaliacao medica ou apoio urgente.'
+  return ['falta de ar', 'desmaio', 'fraqueza', 'febre', 'subita', 'insuportavel'].some((word) =>
+    normalized.includes(word),
+  )
+}
+
+function extractSignals(answer: string) {
+  const normalized = answer.toLowerCase()
+  const signals = [
+    ['trabalho', 'pressao de trabalho'],
+    ['rapido', 'urgencia/produtividade'],
+    ['sozinho', 'baixo suporte percebido'],
+    ['carrego', 'carga acumulada'],
+    ['mudar', 'transicao/direccao'],
+    ['direccao', 'decisao pendente'],
+    ['controlar', 'controlo elevado'],
+    ['parado', 'imobilidade/ruminacao'],
+  ]
+
+  return signals.filter(([keyword]) => normalized.includes(keyword)).map(([, label]) => label)
+}
+
+function chatReply(answer: string, region: Region, layer: LayerId, stage: InterviewStageId) {
+  const normalized = answer.toLowerCase()
+
+  if (hasRedFlag(answer)) {
+    return {
+      tone: 'warning' as const,
+      text: 'Isto entra em zona de seguranca: antes de qualquer leitura emocional, faz sentido procurar avaliacao medica ou apoio urgente.',
+    }
+  }
+
+  if (stage === 'safety') {
+    return {
+      tone: 'normal' as const,
+      text: `Boa. Sem red flags declaradas, posso explorar ${region.label.toLowerCase()} como padrao corpo-contexto. Proxima etapa: quando aparece ou piora?`,
+    }
   }
 
   if (normalized.includes('trabalho') || normalized.includes('pressao') || normalized.includes('rapido')) {
-    return `Estou a ler um padrao de exigencia/ritmo. Para ${region.label.toLowerCase()}, eu perguntaria: que tarefa, expectativa ou limite o corpo pode estar a tentar travar?`
+    return {
+      tone: 'normal' as const,
+      text: `Estou a ler um padrao de exigencia/ritmo. Para ${region.label.toLowerCase()}, eu perguntaria: que tarefa, expectativa ou limite o corpo pode estar a tentar travar?`,
+    }
   }
 
   if (normalized.includes('mudar') || normalized.includes('decidir') || normalized.includes('direccao')) {
-    return `A tua resposta aponta para transicao. Em ${region.label.toLowerCase()}, isso pode ser explorado como suporte, flexibilidade e medo do proximo passo.`
+    return {
+      tone: 'normal' as const,
+      text: `A tua resposta aponta para transicao. Em ${region.label.toLowerCase()}, isso pode ser explorado como suporte, flexibilidade e medo do proximo passo.`,
+    }
   }
 
-  return `Obrigado. Com este detalhe, eu refinaria a hipotese para ${region.label.toLowerCase()} e perguntaria a seguir: ${nextQuestion(region, layer)}`
+  if (stage === 'action') {
+    return {
+      tone: 'normal' as const,
+      text: `Plano de teste: escolhe uma pratica curta, mede a intensidade antes/depois e regista se a dor em ${region.label.toLowerCase()} muda quando ha mais seguranca ou suporte.`,
+    }
+  }
+
+  return {
+    tone: 'normal' as const,
+    text: `Obrigado. Com este detalhe, eu refinaria a hipotese para ${region.label.toLowerCase()} e perguntaria a seguir: ${nextQuestion(region, layer)}`,
+  }
 }
 
 function LayerInsight({
@@ -525,6 +609,9 @@ function App() {
   const [activeLayer, setActiveLayer] = useState<LayerId>('language')
   const [activePractice, setActivePractice] = useState('')
   const [chatDraft, setChatDraft] = useState('')
+  const [interviewStep, setInterviewStep] = useState(0)
+  const [safetyStatus, setSafetyStatus] = useState<'clear' | 'warning'>('clear')
+  const [sessionSignals, setSessionSignals] = useState<string[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       sender: 'bot',
@@ -553,6 +640,11 @@ function App() {
     ? activePractice
     : analysis.primary.region.practices[0]
   const activePracticePlan = practicePlan(activePracticeLabel, analysis.primary.region)
+  const currentStage = interviewStages[interviewStep]
+  const interviewProgress = Math.round(((interviewStep + 1) / interviewStages.length) * 100)
+  const quickReplies = Array.from(
+    new Set([nextQuestion(analysis.primary.region, activeLayer), ...currentStage.quickReplies, 'Aparece mais no trabalho']),
+  ).slice(0, 4)
 
   function applyPreset(preset: string) {
     setDescription(preset)
@@ -568,11 +660,23 @@ function App() {
       return
     }
 
+    const reply = chatReply(cleanText, analysis.primary.region, activeLayer, currentStage.id)
+    const nextSignals = extractSignals(cleanText)
+
+    if (hasRedFlag(cleanText)) {
+      setSafetyStatus('warning')
+    }
+
+    if (nextSignals.length) {
+      setSessionSignals((signals) => Array.from(new Set([...signals, ...nextSignals])).slice(0, 5))
+    }
+
     setChatMessages((messages) => [
       ...messages,
       { sender: 'user', text: cleanText },
-      { sender: 'bot', text: chatReply(cleanText, analysis.primary.region, activeLayer) },
+      { sender: 'bot', text: reply.text, tone: reply.tone },
     ])
+    setInterviewStep((step) => (step < interviewStages.length - 1 && !hasRedFlag(cleanText) ? step + 1 : step))
     setChatDraft('')
   }
 
@@ -673,24 +777,32 @@ function App() {
               <div className="chat-heading">
                 <Bot size={18} />
                 <span>Sessao guiada</span>
-                <small>chat simulado</small>
+                <small>etapa {interviewStep + 1}/4</small>
+              </div>
+              <div className="interview-progress" aria-label={`Progresso da entrevista ${interviewProgress}%`}>
+                <span style={{ width: `${interviewProgress}%` }} />
+              </div>
+              <div className="interview-stage">
+                <strong>{currentStage.label}</strong>
+                <p>{currentStage.goal}</p>
               </div>
               <div className="chat-thread">
                 {chatMessages.slice(-3).map((message, index) => (
-                  <div className={`chat-message ${message.sender}`} key={`${message.sender}-${index}-${message.text}`}>
+                  <div
+                    className={`chat-message ${message.sender} ${message.tone === 'warning' ? 'is-warning' : ''}`}
+                    key={`${message.sender}-${index}-${message.text}`}
+                  >
                     {message.sender === 'bot' ? <Bot size={15} /> : <UserRound size={15} />}
                     <p>{message.text}</p>
                   </div>
                 ))}
               </div>
               <div className="quick-replies">
-                {[nextQuestion(analysis.primary.region, activeLayer), 'Aparece mais no trabalho', 'Tenho medo de mudar de direccao'].map(
-                  (reply) => (
-                    <button key={reply} type="button" onClick={() => sendChatMessage(reply)}>
-                      {reply}
-                    </button>
-                  ),
-                )}
+                {quickReplies.map((reply) => (
+                  <button key={reply} type="button" onClick={() => sendChatMessage(reply)}>
+                    {reply}
+                  </button>
+                ))}
               </div>
               <form
                 className="chat-input"
@@ -709,6 +821,14 @@ function App() {
                   <Send size={16} />
                 </button>
               </form>
+              <div className={`session-summary ${safetyStatus === 'warning' ? 'is-warning' : ''}`}>
+                <span>{safetyStatus === 'warning' ? 'Red flag detectada' : 'Seguranca inicial OK'}</span>
+                <p>
+                  {sessionSignals.length
+                    ? `Pistas recolhidas: ${sessionSignals.join(', ')}.`
+                    : `Aguardando respostas para formar um padrao de ${analysis.primary.region.label.toLowerCase()}.`}
+                </p>
+              </div>
             </div>
 
             <div className="cause-list">
