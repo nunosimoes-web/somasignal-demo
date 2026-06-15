@@ -17,4 +17,13 @@ test('analysis controls update the interpretation surface', async ({ page }) => 
   await page.getByRole('button', { name: /caminhada curta/ }).click()
   await expect(page.getByText('Intervencao somatica curta')).toBeVisible()
   await expect(page.getByText(/Comparar intensidade antes\/depois/)).toBeVisible()
+
+  await page.getByRole('button', { name: /Dor no cotovelo/ }).click()
+  await expect(page.getByRole('heading', { name: 'Cotovelos' })).toBeVisible()
+
+  await page.getByRole('button', { name: /Joelho doi/ }).click()
+  await expect(page.getByRole('heading', { name: 'Joelhos' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Aparece mais no trabalho' }).click()
+  await expect(page.getByText(/padrao de exigencia\/ritmo/)).toBeVisible()
 })
