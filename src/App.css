@@ -398,9 +398,79 @@ h1 {
   font-weight: 760;
 }
 
+.simple-list button svg:last-child {
+  margin-left: auto;
+}
+
+.simple-list button.is-active {
+  border-color: rgba(15, 118, 110, 0.45);
+  background: rgba(240, 253, 250, 0.92);
+}
+
 .simple-list svg {
   flex: 0 0 auto;
   color: #0f766e;
+}
+
+.action-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 16px;
+  padding: 14px;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: 8px;
+  background: rgba(240, 253, 250, 0.78);
+}
+
+.action-plan > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-plan strong {
+  color: #0f3d3a;
+}
+
+.action-plan span {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.action-plan ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: #213f3c;
+  font-size: 13px;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.action-plan p {
+  color: #4d6561;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.action-plan button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: #10201f;
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
 }
 
 .next-step {

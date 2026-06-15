@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowRight,
   Bot,
   Brain,
   CheckCircle2,
@@ -291,6 +292,53 @@ function botReply(text: string, region: Region) {
   }
 }
 
+function solutionPlan(solution: string, region: Region) {
+  const normalized = normalize(solution)
+
+  if (normalized.includes('urgencia') || normalized.includes('medica') || normalized.includes('inchaco')) {
+    return {
+      title: 'Verificar seguranca primeiro',
+      duration: '1 min',
+      steps: ['Confirma se a dor e subita, forte ou diferente do habitual', 'Procura falta de ar, febre, inchaco, perda de forca ou desmaio', 'Se algum sinal existir, fala com um profissional antes de continuar'],
+      success: 'Saber se podes explorar com calma ou se precisas de ajuda medica.',
+    }
+  }
+
+  if (normalized.includes('respirar') || normalized.includes('expirar')) {
+    return {
+      title: 'Baixar o alarme do corpo',
+      duration: '2 min',
+      steps: ['Inspira pelo nariz durante 4 segundos', 'Expira devagar durante 6 segundos', 'Repete 8 vezes e nota se a dor em ' + region.label.toLowerCase() + ' muda'],
+      success: 'A intensidade baixa pelo menos 1 ponto ou a sensacao fica menos urgente.',
+    }
+  }
+
+  if (normalized.includes('pedir') || normalized.includes('contactar') || normalized.includes('delegar')) {
+    return {
+      title: 'Reduzir carga percebida',
+      duration: '3 min',
+      steps: ['Escolhe uma pessoa segura', 'Formula um pedido concreto e pequeno', 'Envia ou agenda esse pedido hoje'],
+      success: 'O corpo sente menos peso ou tens um proximo passo mais claro.',
+    }
+  }
+
+  if (normalized.includes('caminhar') || normalized.includes('andar') || normalized.includes('mexer') || normalized.includes('mobilizar') || normalized.includes('rodar')) {
+    return {
+      title: 'Movimento suave',
+      duration: '5 min',
+      steps: ['Move a zona sem forcar dor', 'Mantem o movimento lento e confortavel', 'Compara a intensidade antes e depois'],
+      success: 'A zona fica mais quente, mais solta ou menos ameaçadora.',
+    }
+  }
+
+  return {
+    title: 'Primeiro passo simples',
+    duration: '2-5 min',
+    steps: ['Observa a dor sem tentar resolver logo', 'Faz a acao sugerida com pouca intensidade', 'Regista o que mudou no corpo e no humor'],
+    success: 'Ganhar uma pista sobre o que ajuda ou piora.',
+  }
+}
+
 function BodyMap({
   active,
   setActive,
@@ -355,6 +403,7 @@ function App() {
   const [selectedRegion, setSelectedRegion] = useState<RegionId>('chest')
   const [draft, setDraft] = useState('')
   const [latestText, setLatestText] = useState(starters[0])
+  const [activeSolution, setActiveSolution] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'bot',
@@ -397,6 +446,18 @@ function App() {
   }
 
   const activeRegion = analysis.primary.region
+  const activeSolutionLabel = activeRegion.solutions.includes(activeSolution) ? activeSolution : activeRegion.solutions[0]
+  const activePlan = solutionPlan(activeSolutionLabel, activeRegion)
+
+  function sendSolutionToChat() {
+    setMessages((current) => [
+      ...current.slice(-3),
+      {
+        sender: 'bot',
+        text: `Vamos testar: ${activeSolutionLabel}. Faz isto durante ${activePlan.duration} e depois observa se a dor em ${activeRegion.label.toLowerCase()} mudou.`,
+      },
+    ])
+  }
 
   return (
     <main className="app">
@@ -519,11 +580,33 @@ function App() {
             <div className="simple-list solutions">
               <span>Experimenta agora</span>
               {activeRegion.solutions.map((solution) => (
-                <button key={solution} type="button">
+                <button
+                  className={activeSolutionLabel === solution ? 'is-active' : ''}
+                  key={solution}
+                  type="button"
+                  onClick={() => setActiveSolution(solution)}
+                >
                   <TimerReset size={16} />
                   {solution}
+                  <ArrowRight size={15} />
                 </button>
               ))}
+            </div>
+
+            <div className="action-plan">
+              <div>
+                <strong>{activePlan.title}</strong>
+                <span>{activePlan.duration}</span>
+              </div>
+              <ol>
+                {activePlan.steps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              <p>{activePlan.success}</p>
+              <button type="button" onClick={sendSolutionToChat}>
+                Enviar para o chat
+              </button>
             </div>
 
             <div className="next-step">

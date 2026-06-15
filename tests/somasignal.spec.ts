@@ -16,6 +16,12 @@ test('simple symptom flow works across map, chat and result', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Joelhos' })).toBeVisible()
   await expect(page.getByText(/suporte, direccao/)).toBeVisible()
 
+  await page.getByRole('button', { name: /pedir apoio numa decisao/ }).click()
+  await expect(page.getByText('Reduzir carga percebida')).toBeVisible()
+  await expect(page.getByText('3 min')).toBeVisible()
+  await page.getByRole('button', { name: 'Enviar para o chat' }).click()
+  await expect(page.getByText(/Vamos testar: pedir apoio numa decisao/)).toBeVisible()
+
   await page.getByLabel('Descrever dor').fill('Tenho falta de ar e dor no peito')
   await page.getByLabel('Enviar').click()
   await expect(page.getByText(/avaliacao medica/).first()).toBeVisible()
