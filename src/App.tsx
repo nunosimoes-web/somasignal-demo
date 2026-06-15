@@ -5,9 +5,12 @@ import {
   Brain,
   CheckCircle2,
   HeartPulse,
+  ListChecks,
+  MessageCircleQuestion,
   Radar,
   ShieldCheck,
   Sparkles,
+  TimerReset,
   Waves,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -35,6 +38,8 @@ type Region = {
   practices: string[]
   keywords: string[]
 }
+
+type LayerId = 'language' | 'body' | 'context'
 
 const regions: Region[] = [
   {
@@ -152,19 +157,171 @@ const competitorSignals = [
   'Lin Health: abordagem biopsicossocial com suporte humano',
 ]
 
+const layerCopy = {
+  language: {
+    icon: Activity,
+    label: 'Linguagem da dor',
+    title: 'Como a pessoa descreve a dor',
+    explainer:
+      'Extrai palavras de intensidade, tempo, pressao e perda de controlo. Isto ajuda a distinguir dor aguda, dor persistente e dor associada a ameaca percebida.',
+  },
+  body: {
+    icon: Radar,
+    label: 'Zona corporal',
+    title: 'Onde o corpo esta a chamar atencao',
+    explainer:
+      'Cruza a regiao escolhida no mapa com palavras anatomicas no texto. O mapa deixa de ser decorativo e passa a ser uma segunda fonte de sinal.',
+  },
+  context: {
+    icon: Waves,
+    label: 'Contexto emocional',
+    title: 'Que historia pode estar por baixo',
+    explainer:
+      'Procura pistas de trabalho, relacao, medo, carga, isolamento e antecipacao para gerar perguntas melhores, nao conclusoes fechadas.',
+  },
+} satisfies Record<LayerId, { icon: typeof Activity; label: string; title: string; explainer: string }>
+
+const emotionalLexicon = [
+  'ansiedade',
+  'medo',
+  'pressao',
+  'trabalho',
+  'sozinho',
+  'carrego',
+  'luto',
+  'raiva',
+  'reunioes',
+  'importantes',
+  'acordar',
+  'stress',
+]
+
+const intensityLexicon = ['aperto', 'preso', 'pressao', 'forte', 'intensa', 'semanas', 'sempre', 'acordar']
+
 function scoreRegion(region: Region, text: string, selected: RegionId) {
   const normalized = text.toLowerCase()
   const keywordHits = region.keywords.filter((keyword) => normalized.includes(keyword)).length
-  const selectedBoost = region.id === selected ? 2.6 : 0
-  const emotionalHits = ['stress', 'ansiedade', 'medo', 'pressao', 'trabalho', 'sozinho', 'luto', 'raiva'].filter(
-    (keyword) => normalized.includes(keyword),
-  ).length
+  const selectedBoost = region.id === selected ? 1.1 : 0
+  const emotionalHits = emotionalLexicon.filter((keyword) => normalized.includes(keyword)).length
 
   return selectedBoost + keywordHits * 1.8 + emotionalHits * 0.32
 }
 
 function confidence(score: number) {
   return Math.min(94, Math.round(52 + score * 12))
+}
+
+function inferRegionFromText(text: string) {
+  const ranked = regions
+    .map((region) => ({
+      region,
+      hits: region.keywords.filter((keyword) => text.toLowerCase().includes(keyword)).length,
+    }))
+    .sort((a, b) => b.hits - a.hits)
+
+  return ranked[0]?.hits > 0 ? ranked[0].region.id : null
+}
+
+function practicePlan(practice: string, region: Region) {
+  const normalized = practice.toLowerCase()
+
+  if (normalized.includes('urgencia')) {
+    return {
+      title: 'Triagem de seguranca',
+      why: 'Quando ha sinais de alarme, a app deve interromper a narrativa psicossomatica e orientar para avaliacao medica.',
+      steps: ['Verificar intensidade, inicio subito e sintomas associados', 'Se houver falta de ar, fraqueza ou dor forte, procurar ajuda', 'Registar o episodio para futura consulta'],
+    }
+  }
+
+  if (normalized.includes('respir') || normalized.includes('expiracao')) {
+    return {
+      title: 'Regulacao respiratoria',
+      why: `Ajuda a reduzir alarme autonomico associado a ${region.label.toLowerCase()} antes de interpretar a dor.`,
+      steps: ['Inspirar pelo nariz durante 4 segundos', 'Expirar mais devagar durante 6 a 8 segundos', 'Repetir 8 ciclos e reavaliar a sensacao'],
+    }
+  }
+
+  if (normalized.includes('diario') || normalized.includes('nomear') || normalized.includes('limites')) {
+    return {
+      title: 'Nomear o padrao',
+      why: 'Transforma uma sensacao difusa numa hipotese observavel, reduzindo a necessidade de o corpo carregar o sinal sozinho.',
+      steps: ['Escrever a frase: "esta dor aparece quando..."', 'Identificar uma emocao e uma necessidade', 'Escolher uma accao pequena para as proximas 2 horas'],
+    }
+  }
+
+  return {
+    title: 'Intervencao somatica curta',
+    why: `Cria uma experiencia de seguranca local na zona ${region.label.toLowerCase()} sem prometer cura nem diagnostico.`,
+    steps: ['Observar a zona durante 20 segundos sem tentar corrigir', 'Fazer movimento suave dentro de conforto', 'Comparar intensidade antes/depois numa escala 0-10'],
+  }
+}
+
+function LayerInsight({
+  layer,
+  description,
+  selectedRegion,
+  rankedRegions,
+}: {
+  layer: LayerId
+  description: string
+  selectedRegion: Region
+  rankedRegions: { region: Region; score: number }[]
+}) {
+  const normalized = description.toLowerCase()
+  const intensityHits = intensityLexicon.filter((word) => normalized.includes(word))
+  const emotionalHits = emotionalLexicon.filter((word) => normalized.includes(word))
+  const bodyHits = regions.flatMap((region) =>
+    region.keywords.filter((keyword) => normalized.includes(keyword)).map((keyword) => `${keyword} -> ${region.label}`),
+  )
+
+  if (layer === 'language') {
+    return (
+      <div className="layer-card">
+        <div className="layer-title">
+          <ListChecks size={17} />
+          Sinais detectados no texto
+        </div>
+        <div className="signal-grid">
+          <span>Intensidade: {intensityHits.length ? intensityHits.join(', ') : 'baixa/nao explicita'}</span>
+          <span>Tempo: {normalized.includes('semanas') ? 'persistente' : 'nao especificado'}</span>
+          <span>Forma: {normalized.includes('aperto') ? 'contraccao/aperto' : 'descritor livre'}</span>
+        </div>
+        <p>Proxima pergunta sugerida: a dor aumenta quando tentas controlar, agradar ou antecipar alguma coisa?</p>
+      </div>
+    )
+  }
+
+  if (layer === 'body') {
+    return (
+      <div className="layer-card">
+        <div className="layer-title">
+          <ListChecks size={17} />
+          Correspondencia corpo-texto
+        </div>
+        <div className="signal-grid">
+          <span>Zona escolhida: {selectedRegion.label}</span>
+          <span>Texto detectou: {bodyHits.length ? bodyHits.slice(0, 3).join(', ') : 'sem zona explicita'}</span>
+          <span>Alternativas: {rankedRegions.slice(1, 3).map(({ region }) => region.label).join(' / ')}</span>
+        </div>
+        <p>Clicar noutra zona do corpo recalcula a hipotese, mas o texto continua a ter prioridade.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="layer-card">
+      <div className="layer-title">
+        <MessageCircleQuestion size={17} />
+        Hipoteses emocionais para entrevista
+      </div>
+      <div className="signal-grid">
+        <span>Pistas: {emotionalHits.length ? emotionalHits.join(', ') : 'ainda poucas'}</span>
+        <span>Estado provavel: {emotionalHits.length > 2 ? 'sobrecarga' : 'exploratorio'}</span>
+        <span>Risco narrativo: evitar causalidade rigida</span>
+      </div>
+      <p>Proxima pergunta sugerida: se esta dor pudesse proteger-te de uma conversa, decisao ou limite, qual seria?</p>
+    </div>
+  )
 }
 
 function BodyMap({
@@ -230,6 +387,8 @@ function BodyMap({
 function App() {
   const [selectedRegion, setSelectedRegion] = useState<RegionId>('chest')
   const [description, setDescription] = useState(presets[0])
+  const [activeLayer, setActiveLayer] = useState<LayerId>('language')
+  const [activePractice, setActivePractice] = useState('')
 
   const analysis = useMemo(() => {
     const ranked = regions
@@ -242,9 +401,24 @@ function App() {
     return {
       primary,
       secondary,
+      ranked,
       confidence: confidence(primary.score),
     }
   }, [description, selectedRegion])
+
+  const selectedRegionData = regions.find((region) => region.id === selectedRegion) ?? analysis.primary.region
+  const activePracticeLabel = analysis.primary.region.practices.includes(activePractice)
+    ? activePractice
+    : analysis.primary.region.practices[0]
+  const activePracticePlan = practicePlan(activePracticeLabel, analysis.primary.region)
+
+  function applyPreset(preset: string) {
+    setDescription(preset)
+    const inferred = inferRegionFromText(preset)
+    if (inferred) {
+      setSelectedRegion(inferred)
+    }
+  }
 
   return (
     <main className="app">
@@ -282,7 +456,7 @@ function App() {
               />
               <div className="preset-row">
                 {presets.map((preset) => (
-                  <button key={preset} type="button" onClick={() => setDescription(preset)}>
+                  <button key={preset} type="button" onClick={() => applyPreset(preset)}>
                     {preset}
                   </button>
                 ))}
@@ -290,18 +464,26 @@ function App() {
             </div>
 
             <div className="signals">
-              <div>
-                <Activity size={18} />
-                Linguagem da dor
-              </div>
-              <div>
-                <Radar size={18} />
-                Zona corporal
-              </div>
-              <div>
-                <Waves size={18} />
-                Contexto emocional
-              </div>
+              {(Object.keys(layerCopy) as LayerId[]).map((layer) => {
+                const Icon = layerCopy[layer].icon
+
+                return (
+                  <button
+                    className={activeLayer === layer ? 'is-active' : ''}
+                    key={layer}
+                    type="button"
+                    onClick={() => setActiveLayer(layer)}
+                  >
+                    <Icon size={18} />
+                    {layerCopy[layer].label}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="layer-explainer">
+              <strong>{layerCopy[activeLayer].title}</strong>
+              <p>{layerCopy[activeLayer].explainer}</p>
             </div>
           </section>
 
@@ -324,6 +506,13 @@ function App() {
               </div>
             </div>
 
+            <LayerInsight
+              layer={activeLayer}
+              description={description}
+              selectedRegion={selectedRegionData}
+              rankedRegions={analysis.ranked}
+            />
+
             <div className="cause-list">
               <span>Possiveis causas a explorar</span>
               {analysis.primary.region.causes.map((cause) => (
@@ -337,11 +526,29 @@ function App() {
             <div className="practice-list">
               <span>Primeiras micro-intervencoes</span>
               {analysis.primary.region.practices.map((practice) => (
-                <button key={practice} type="button">
+                <button
+                  className={activePracticeLabel === practice ? 'is-active' : ''}
+                  key={practice}
+                  type="button"
+                  onClick={() => setActivePractice(practice)}
+                >
                   {practice}
                   <ArrowRight size={15} />
                 </button>
               ))}
+            </div>
+
+            <div className="practice-detail">
+              <div>
+                <TimerReset size={18} />
+                <span>{activePracticePlan.title}</span>
+              </div>
+              <p>{activePracticePlan.why}</p>
+              <ol>
+                {activePracticePlan.steps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
             </div>
 
             <div className="safety-note">
