@@ -616,6 +616,7 @@ function App() {
           </section>
         </section>
       </section>
+      <footer style={{ padding: "24px", textAlign: "center" }}><a href="mailto:somasignal@cognixhub.com">Apoio à demonstração · somasignal@cognixhub.com</a></footer>
     </main>
   )
 }
