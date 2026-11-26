@@ -119,7 +119,7 @@ export type Alert = {
   labels: string[]
 }
 
-type Rule = { label: string; level: SignLevel; test: RegExp }
+type Rule = { label: string; level: SignLevel; pattern: RegExp }
 
 /** Todas as expressões são testadas contra texto normalizado (sem acentos, minúsculas). */
 const crisisRules: RegExp[] = [
@@ -134,23 +134,23 @@ const crisisRules: RegExp[] = [
 ]
 
 const physicalRules: Rule[] = [
-  { label: 'dificuldade em respirar', level: 'now', test: /\b(falta de ar|falta-me o ar|falta o ar|sem ar|nao (consigo|posso) respirar|(dificuldade|dificuldades|custa-me|custa) (em |a )?respirar|sufoc\w*)/ },
-  { label: 'desmaio ou perda de consciência', level: 'now', test: /\b(desmai\w*|perdi (a consciencia|os sentidos)|perda de consciencia)/ },
-  { label: 'fraqueza ou perda de força', level: 'now', test: /\b(perda de forca|perd(i|o|eu) (a )?forca|sem forca|falta de forca|fraqueza|paralis\w*|nao (sinto|consigo mexer|mexo) (a|o|as|os|uma|um) (perna|pernas|braco|bracos|lado|mao|maos|cara))/ },
-  { label: 'dificuldade em falar, boca ao lado ou confusão', level: 'now', test: /\b(dificuldade (em|a) falar|nao consigo falar|fala (arrastada|enrolada)|boca ao lado|cara (caida|descaida)|confus(ao mental|o e desorientad\w*)|desorientad\w*|convuls\w*)/ },
-  { label: 'alteração da visão', level: 'now', test: /\b(perdi a visao|perda de visao|deixei de ver|nao vejo de um olho|visao dupla|vejo a dobrar)/ },
-  { label: 'dor súbita', level: 'now', test: /\b(subit[oa]s?|subitamente|de repente|repentin[oa]s?)\b/ },
-  { label: 'dor muito forte', level: 'now', test: /\b(insuportave(l|is)|pior dor|dor (horrivel|extrema|extremamente forte|muito forte|fortissima)|nao aguento (a|esta|com a) dor)/ },
-  { label: 'peito com sinais associados', level: 'now', test: /^(?=.*\b(peito|toracic[oa]|coracao)\b)(?=.*\b(braco|maxilar|mandibula|suor|suores|suar|enjoo|enjoad\w*|nausea|nauseas|vomit\w*|tontur\w*|espalha\w*|irradia\w*|dormente|dormencia)\b)/ },
-  { label: 'aperto ou pressão no peito', level: 'now', test: /^(?=.*\b(peito|toracic[oa]|coracao)\b)(?=.*\b(agora|neste momento|nao passa|nao para)\b)/ },
-  { label: 'dormência na zona genital ou alteração da bexiga/intestino', level: 'now', test: /(dormen\w*|sensibilidade|nao sinto).{0,40}(genita\w*|anus|virilha|vagina|penis)|\b(incontinenc\w*|nao consigo urinar|nao consigo fazer xixi|perdi o controlo d[ao] (bexiga|intestino)|urinei sem querer)/ },
-  { label: 'dormência ou fraqueza nas duas pernas', level: 'now', test: /^(?=.*\b(duas pernas|ambas as pernas|as pernas)\b)(?=.*\b(dormen\w*|fraqueza|formigueiro|nao sinto)\b)/ },
-  { label: 'sangue', level: 'now', test: /\b(vomit\w* (com )?sangue|sangue (nas fezes|no vomito|na urina)|fezes pretas|hemorragia|sangramento (forte|intenso))/ },
-  { label: 'pancada na cabeça ou acidente', level: 'now', test: /\b(bati (com )?a cabeca|bati com a cabeca|pancada na cabeca|traumatismo|acidente (de carro|de mota|grave)|fui atropelad[oa])/ },
-  { label: 'febre', level: 'today', test: /\b(febre|febril|arrepios de frio)\b/ },
-  { label: 'inchaço numa perna', level: 'today', test: /^(?=.*\b(perna|gemeo|barriga da perna|coxa)\b)(?=.*\b(inchad[oa]|inchaco|inchou|quente|vermelh[oa])\b)/ },
-  { label: 'gravidez', level: 'today', test: /\b(gravida|gravidez)\b/ },
-  { label: 'perda de peso sem explicação', level: 'today', test: /\b(perdi (muito )?peso sem|perda de peso (sem|inexplicad\w*))/ },
+  { label: 'dificuldade em respirar', level: 'now', pattern: /\b(falta de ar|falta-me o ar|falta o ar|sem ar|nao (consigo|posso) respirar|(dificuldade|dificuldades|custa-me|custa) (em |a )?respirar|sufoc\w*)/ },
+  { label: 'desmaio ou perda de consciência', level: 'now', pattern: /\b(desmai\w*|perdi (a consciencia|os sentidos)|perda de consciencia)/ },
+  { label: 'fraqueza ou perda de força', level: 'now', pattern: /\b(perda de forca|perd(i|o|eu) (a )?forca|sem forca|falta de forca|fraqueza|paralis\w*|nao (sinto|consigo mexer|mexo) (a|o|as|os|uma|um) (perna|pernas|braco|bracos|lado|mao|maos|cara))/ },
+  { label: 'dificuldade em falar, boca ao lado ou confusão', level: 'now', pattern: /\b(dificuldade (em|a) falar|nao consigo falar|fala (arrastada|enrolada)|boca ao lado|cara (caida|descaida)|confus(ao mental|o e desorientad\w*)|desorientad\w*|convuls\w*)/ },
+  { label: 'alteração da visão', level: 'now', pattern: /\b(perdi a visao|perda de visao|deixei de ver|nao vejo de um olho|visao dupla|vejo a dobrar)/ },
+  { label: 'dor súbita', level: 'now', pattern: /\b(subit[oa]s?|subitamente|de repente|repentin[oa]s?)\b/ },
+  { label: 'dor muito forte', level: 'now', pattern: /\b(insuportave(l|is)|pior dor|dor (horrivel|extrema|extremamente forte|muito forte|fortissima)|nao aguento (a|esta|com a) dor)/ },
+  { label: 'peito com sinais associados', level: 'now', pattern: /^(?=.*\b(peito|toracic[oa]|coracao)\b)(?=.*\b(braco|maxilar|mandibula|suor|suores|suar|enjoo|enjoad\w*|nausea|nauseas|vomit\w*|tontur\w*|espalha\w*|irradia\w*|dormente|dormencia)\b)/ },
+  { label: 'aperto ou pressão no peito', level: 'now', pattern: /^(?=.*\b(peito|toracic[oa]|coracao)\b)(?=.*\b(agora|neste momento|nao passa|nao para)\b)/ },
+  { label: 'dormência na zona genital ou alteração da bexiga/intestino', level: 'now', pattern: /(dormen\w*|sensibilidade|nao sinto).{0,40}(genita\w*|anus|virilha|vagina|penis)|\b(incontinenc\w*|nao consigo urinar|nao consigo fazer xixi|perdi o controlo d[ao] (bexiga|intestino)|urinei sem querer)/ },
+  { label: 'dormência ou fraqueza nas duas pernas', level: 'now', pattern: /^(?=.*\b(duas pernas|ambas as pernas|as pernas)\b)(?=.*\b(dormen\w*|fraqueza|formigueiro|nao sinto)\b)/ },
+  { label: 'sangue', level: 'now', pattern: /\b(vomit\w* (com )?sangue|sangue (nas fezes|no vomito|na urina)|fezes pretas|hemorragia|sangramento (forte|intenso))/ },
+  { label: 'pancada na cabeça ou acidente', level: 'now', pattern: /\b(bati (com )?a cabeca|bati com a cabeca|pancada na cabeca|traumatismo|acidente (de carro|de mota|grave)|fui atropelad[oa])/ },
+  { label: 'febre', level: 'today', pattern: /\b(febre|febril|arrepios de frio)\b/ },
+  { label: 'inchaço numa perna', level: 'today', pattern: /^(?=.*\b(perna|gemeo|barriga da perna|coxa)\b)(?=.*\b(inchad[oa]|inchaco|inchou|quente|vermelh[oa])\b)/ },
+  { label: 'gravidez', level: 'today', pattern: /\b(gravida|gravidez)\b/ },
+  { label: 'perda de peso sem explicação', level: 'today', pattern: /\b(perdi (muito )?peso sem|perda de peso (sem|inexplicad\w*))/ },
 ]
 
 /**
@@ -164,7 +164,7 @@ export function detectAlert(text: string): Alert | null {
     return { kind: 'crisis', level: 'now', labels: [] }
   }
 
-  const hits = physicalRules.filter((rule) => rule.test(normalized))
+  const hits = physicalRules.filter((rule) => rule.pattern.test(normalized))
   if (hits.length === 0) {
     return null
   }

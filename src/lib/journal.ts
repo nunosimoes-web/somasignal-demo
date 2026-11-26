@@ -58,7 +58,7 @@ export const journalStore = {
     }
   },
   getSnapshot(): JournalEntry[] {
-    let raw: string | null = null
+    let raw: string | null
     try {
       raw = window.localStorage.getItem(KEY)
     } catch {
