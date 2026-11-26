@@ -1,15 +1,50 @@
 <!doctype html>
-<html lang="pt">
+<html lang="pt-PT">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SomaSignal · Mapa da dor: sinais de alerta, padrões e um primeiro passo</title>
     <meta
       name="description"
-      content="SomaSignal, mockup de mapa de sintomas psicossomaticos para explorar relacoes entre dor, corpo e contexto emocional."
+      content="Escolhe onde dói e conta quando aparece. Em poucos minutos tens sinais de alerta a excluir, perguntas para observar e um exercício curto, sem registo e sem sair do navegador."
     />
-    <title>SomaSignal | Mapa de sintomas psicossomaticos</title>
+    <meta name="theme-color" content="#0f766e" />
+    <link rel="canonical" href="https://nunosimoes-web.github.io/somasignal-demo/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_PT" />
+    <meta property="og:site_name" content="SomaSignal" />
+    <meta property="og:title" content="SomaSignal · Onde dói? E o que se passa à volta dessa dor?" />
+    <meta
+      property="og:description"
+      content="Mapa da dor gratuito: sinais de alerta a excluir, perguntas para observar e um passo de 2 a 5 minutos. Sem registo."
+    />
+    <meta property="og:url" content="https://nunosimoes-web.github.io/somasignal-demo/" />
+    <meta property="og:image" content="https://nunosimoes-web.github.io/somasignal-demo/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="SomaSignal: mapa do corpo com zonas e o resultado de exemplo" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" id="schema-app">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "SomaSignal",
+        "url": "https://nunosimoes-web.github.io/somasignal-demo/",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "pt-PT",
+        "isAccessibleForFree": true,
+        "description": "Demonstração exploratória de um mapa da dor: sinais de alerta a excluir, perguntas para observar e um exercício curto. Não é um dispositivo médico nem faz diagnósticos.",
+        "email": "somasignal@cognixhub.com"
+      }
+    </script>
+    <!-- faq-schema: o vite.config.ts troca esta linha pelo FAQPage gerado de src/data/faq.ts -->
   </head>
   <body>
+    <noscript>O SomaSignal precisa de JavaScript para funcionar. Em emergência liga 112; SNS 24: 808 24 24 24.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

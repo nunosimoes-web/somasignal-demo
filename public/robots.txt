@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nunosimoes-web.github.io/somasignal-demo/sitemap.xml

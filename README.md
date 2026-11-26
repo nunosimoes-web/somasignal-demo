@@ -4,17 +4,11 @@ Frontend mockup for an investor-facing psychosomatic symptom map.
 
 The app lets a user describe pain, select a body region, and receive an exploratory interpretation: likely emotional/contextual patterns, possible causes to investigate, micro-interventions, and medical safety warnings.
 
-## Benchmark notes
+## Docs
 
-Direct open-source equivalents were limited. Useful references found:
-
-- Curable: mind-body chronic pain education and guided exercises.
-- Pathways: structured pain relief program with a biopsychosocial framing.
-- Bearable: symptom tracking and pattern/correlation discovery.
-- Lin Health: clinician-supported chronic pain positioning.
-- `Kmorris1370/Bones-and-All`: recent Flutter health app with interactive body map and pain tracking.
-- `navillasa/biolingual-app`: interactive anatomy map using ApiMedic/translation APIs.
-- `benediktclaus/bodymap`: R package for mapping body-related data visually.
+- [Auditoria de conversão](docs/AUDITORIA-conversao.md) — linha de base, o que mudou e portões.
+- [Benchmark](docs/BENCHMARK-conversao.md) — Curable, Pathways, Bearable, Ada, Manage My Pain e Symptomate, com fontes.
+- [Roadmap de conversão](docs/ROADMAP-conversao.md) — próximas 10 melhorias priorizadas.
 
 ## Local development
 
@@ -23,11 +17,14 @@ npm install
 npm run dev
 ```
 
-## Build
+## Checks
 
 ```bash
-npm run build
 npm run lint
+npm test          # vitest (unit)
+npm run build
+npm run test:e2e  # Playwright desktop + mobile, with axe accessibility checks
+npm run check     # all of the above
 ```
 
 ## Deploy
