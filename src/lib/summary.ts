@@ -13,7 +13,14 @@ export function describeChange({ before, after }: Pick<CheckIn, 'before' | 'afte
 }
 
 /** Resumo em texto simples para levar a uma consulta. Só inclui o que a pessoa escreveu ou escolheu. */
-export function buildSummary(analysis: Analysis, words: string[], checkIns: CheckIn[], date: Date): string {
+export function buildSummary(
+  analysis: Analysis,
+  words: string[],
+  checkIns: CheckIn[],
+  date: Date,
+  /** Sinais de alerta que a pessoa disse não ter: um clínico quer saber o que foi excluído. */
+  clearedSigns: string[] = [],
+): string {
   const lines = [
     'SomaSignal: resumo para levar a uma consulta',
     `Data: ${date.toLocaleDateString('pt-PT')}`,
@@ -22,6 +29,9 @@ export function buildSummary(analysis: Analysis, words: string[], checkIns: Chec
 
   if (words.length > 0) {
     lines.push('', 'O que escrevi:', ...words.map((word) => `- ${word}`))
+  }
+  if (clearedSigns.length > 0) {
+    lines.push('', 'Sinais de alerta que confirmei não ter:', ...clearedSigns.map((sign) => `- ${sign}`))
   }
   if (analysis.themes.length > 0) {
     lines.push('', `Contexto que mencionei: ${analysis.themes.map((theme) => theme.label).join(', ')}`)

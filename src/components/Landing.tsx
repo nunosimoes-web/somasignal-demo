@@ -1,4 +1,4 @@
-import { ArrowDown, Ear, HeartPulse, LockKeyhole, Mail, ShieldCheck, UserX } from 'lucide-react'
+import { ArrowDown, ArrowRight, Ear, EyeOff, HardDrive, HeartPulse, LockKeyhole, Mail, ShieldCheck, Trash2, UserX } from 'lucide-react'
 import { faq } from '../data/faq'
 
 export const CONTACT = 'somasignal@cognixhub.com'
@@ -10,8 +10,8 @@ export function Hero({ onExample }: { onExample: () => void }) {
         <p className="eyebrow">Mapa de sintomas · demonstração gratuita</p>
         <h1>Onde dói? E o que se passa à volta dessa dor?</h1>
         <p className="lead">
-          Escolhe uma zona do corpo e conta em que momentos dói. Em poucos minutos tens sinais de alerta a excluir,
-          perguntas para observares e um primeiro passo simples.
+          Escolhe uma zona do corpo e conta em que momentos dói. Em cerca de 5 minutos tens sinais de alerta a excluir,
+          perguntas para observares, um primeiro passo simples e um resumo para levares à tua próxima consulta.
         </p>
         <div className="hero-actions">
           <a className="button is-primary is-large" href="#mapa">
@@ -33,8 +33,10 @@ export function Hero({ onExample }: { onExample: () => void }) {
           </li>
         </ul>
       </div>
-      <aside className="hero-card" aria-label="Exemplo de resultado">
-        <p className="label">Exemplo de resultado</p>
+      <aside className="hero-card" aria-labelledby="exemplo-titulo">
+        <p className="label" id="exemplo-titulo">
+          Exemplo de resultado
+        </p>
         <p className="hero-quote">«Tensão no pescoço ao fim de um dia ao computador»</p>
         <dl>
           <div>
@@ -50,6 +52,9 @@ export function Hero({ onExample }: { onExample: () => void }) {
             <dd>Movimento suave, 3 minutos, dor medida antes e depois</dd>
           </div>
         </dl>
+        <button className="text-button hero-try" type="button" onClick={onExample}>
+          Experimentar este exemplo <ArrowRight size={15} aria-hidden="true" />
+        </button>
       </aside>
     </section>
   )
@@ -87,8 +92,25 @@ export function Limits() {
         <h2 id="titulo-seguranca">O que é, e o que não é</h2>
         <p>
           O SomaSignal parte de uma ideia simples: uma dor raramente vem sozinha. Sono, movimento, carga e preocupações
-          podem acompanhá-la, e reparar nisso ajuda a conversar melhor com quem te trata.
+          podem acompanhá-la, e reparar nisso ajuda a conversar melhor com quem te trata. Não substitui a consulta:
+          prepara-a.
         </p>
+        <details className="sources">
+          <summary>De onde vêm os sinais de alerta</summary>
+          <p>
+            Adaptados das páginas públicas do NHS (Reino Unido), consultadas em novembro de 2026, e ainda por rever por um
+            clínico em Portugal:
+          </p>
+          <ul>
+            {sources.map((source) => (
+              <li key={source.href}>
+                <a href={source.href} rel="noopener noreferrer" target="_blank">
+                  {source.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
       <div className="limits-grid">
         <div>
@@ -107,6 +129,48 @@ export function Limits() {
             <li>emergências: aí, liga 112</li>
           </ul>
         </div>
+      </div>
+    </section>
+  )
+}
+
+const sources = [
+  { label: 'Dores de cabeça', href: 'https://www.nhs.uk/conditions/headaches/' },
+  { label: 'Dor no peito', href: 'https://www.nhs.uk/symptoms/chest-pain/' },
+  { label: 'Dor nas costas', href: 'https://www.nhs.uk/conditions/back-pain/' },
+  { label: 'Dor de barriga', href: 'https://www.nhs.uk/symptoms/stomach-ache/' },
+  { label: 'Dor no ombro', href: 'https://www.nhs.uk/symptoms/shoulder-pain/' },
+  { label: 'Dor pélvica', href: 'https://www.nhs.uk/symptoms/pelvic-pain/' },
+  { label: 'Dor no joelho', href: 'https://www.nhs.uk/symptoms/knee-pain/' },
+  { label: 'Trombose venosa profunda', href: 'https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/' },
+]
+
+export function Privacy() {
+  return (
+    <section className="section" id="privacidade" aria-labelledby="titulo-privacidade">
+      <h2 id="titulo-privacidade">A tua privacidade, em quatro promessas</h2>
+      <p className="section-lead">Falar de dor é pessoal. Por isso a demonstração foi feita para não precisar de saber quem és.</p>
+      <div className="audiences">
+        <article>
+          <UserX size={22} aria-hidden="true" />
+          <h3>Sem conta</h3>
+          <p>Não pedimos nome, email nem telefone para usares o mapa.</p>
+        </article>
+        <article>
+          <EyeOff size={22} aria-hidden="true" />
+          <h3>Nada sai do navegador</h3>
+          <p>O que escreves é analisado no teu dispositivo. Não há servidor a receber o texto.</p>
+        </article>
+        <article>
+          <HardDrive size={22} aria-hidden="true" />
+          <h3>Só guardas se quiseres</h3>
+          <p>O registo opcional fica neste navegador e tem só a zona, o passo e os dois valores de dor.</p>
+        </article>
+        <article>
+          <Trash2 size={22} aria-hidden="true" />
+          <h3>Apagas com um toque</h3>
+          <p>«Apagar tudo» limpa os registos. Fechar a página apaga a conversa.</p>
+        </article>
       </div>
     </section>
   )
@@ -136,8 +200,13 @@ export function Partners() {
         <h2 id="titulo-contacto">Trabalhas em saúde, dor ou investimento?</h2>
         <p>
           O SomaSignal é uma demonstração à procura de parceiros para validar clinicamente o conteúdo e testar com
-          pessoas reais. Se te interessa, escreve-nos.
+          pessoas reais. Procuramos sobretudo:
         </p>
+        <ul>
+          <li>profissionais de saúde para rever os sinais de alerta e as sugestões;</li>
+          <li>clínicas ou equipas que queiram experimentar o resumo nas consultas;</li>
+          <li>investidores interessados em saúde digital preventiva.</li>
+        </ul>
       </div>
       <div>
         <a className="button is-light is-large" href={`mailto:${CONTACT}?subject=${subject}`}>

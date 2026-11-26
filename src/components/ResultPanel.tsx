@@ -2,7 +2,7 @@ import { ArrowRight, MessageCircleQuestion, Stethoscope, Timer } from 'lucide-re
 import { useState } from 'react'
 import { plans } from '../data/plans'
 import type { RegionId } from '../data/regions'
-import type { Alert } from '../data/safety'
+import { zoneSigns, type Alert } from '../data/safety'
 import type { Analysis } from '../lib/analysis'
 import { buildSummary, type CheckIn } from '../lib/summary'
 import { CrisisPanel, FlaggedPanel, PhysicalAlertPanel, SafetyCheck } from './SafetyPanels'
@@ -116,7 +116,16 @@ function Exploration({
         />
       </div>
 
-      <SummaryCard key={checkIns.length} text={buildSummary(analysis, words, checkIns, new Date())} />
+      <SummaryCard
+        key={checkIns.length}
+        text={buildSummary(
+          analysis,
+          words,
+          checkIns,
+          new Date(),
+          zoneSigns[region.signs].map((sign) => sign.text),
+        )}
+      />
 
       <p className="next-step">
         <Stethoscope size={18} aria-hidden="true" />
@@ -140,6 +149,7 @@ export function ResultPanel({
   onSafety,
   onSelectRegion,
   onSave,
+  onExample,
 }: {
   analysis: Analysis | null
   alert: Alert | null
@@ -152,6 +162,7 @@ export function ResultPanel({
   onSafety: (state: SafetyState) => void
   onSelectRegion: (id: RegionId) => void
   onSave: (checkIn: CheckIn) => boolean
+  onExample: () => void
 }) {
   function content() {
     if (alert?.kind === 'crisis') {
@@ -173,6 +184,11 @@ export function ResultPanel({
             <li>um passo de 2 a 5 minutos, com a dor medida antes e depois;</li>
             <li>um resumo para levares a uma consulta.</li>
           </ol>
+          <div className="empty-actions">
+            <button className="button" type="button" onClick={onExample}>
+              Ver um exemplo
+            </button>
+          </div>
         </div>
       )
     }

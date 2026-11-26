@@ -4,7 +4,7 @@ import './App.css'
 import { BodyMap } from './components/BodyMap'
 import { ChatPanel, type ChatMessage } from './components/ChatPanel'
 import { Journal } from './components/Journal'
-import { Faq, Footer, Hero, HowItWorks, Limits, Partners } from './components/Landing'
+import { Faq, Footer, Hero, HowItWorks, Limits, Partners, Privacy } from './components/Landing'
 import { ResultPanel, type SafetyState } from './components/ResultPanel'
 import { regionById, starters, type RegionId } from './data/regions'
 import { detectAlert, type Alert } from './data/safety'
@@ -132,6 +132,9 @@ function App() {
             <a href="#seguranca">Segurança</a>
             <a href="#perguntas">Perguntas</a>
             <a href="#contacto">Contacto</a>
+            <a className="nav-cta" href="#mapa">
+              Experimentar
+            </a>
           </nav>
         </header>
 
@@ -179,12 +182,14 @@ function App() {
                 focusResult()
               }}
               onSave={saveCheckIn}
+              onExample={showExample}
             />
           </div>
 
           <Journal />
           <HowItWorks />
           <Limits />
+          <Privacy />
           <Faq />
           <Partners />
         </main>
